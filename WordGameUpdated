@@ -1,0 +1,84 @@
+import random as rand
+from nltk.corpus import wordnet as wn
+
+print("Welcome")
+print("The game works like this: You get 4 guesses, and if you guess wrong, you receive a hint.")
+print("The first hint are synonyms; second is the definition; and the third is a number, 0 to 1, which represents how "
+      "similar your guess was to the actual word.")
+
+# Check if name is letters
+while True:
+    name = input("What is your name? ")
+    # Check if the input contains only letters and no whitespace
+    if name.isalpha() and not name.isspace():
+        # If it meets the conditions, strip whitespace and break the loop
+        name_stripped = name.replace(" ", "")
+        break
+    else:
+        print("Invalid input. Please enter only letters with no whitespace.")
+
+print(f"Hello {name}")
+
+# Word list
+poss_words = ["revolution", "keyboard", "waterfall", "planet", "map", "poster", "aquarium", "brick", "interruption",
+              "clock", "camera", "internet", "chair", "giraffe", "student", "laboratory", "lightbulb", "garden",
+              "backpack", "charger", "pencil", "calculator"]
+
+# Get word
+act_word = rand.choice(poss_words)
+word_len = len(act_word)
+print(f"The word is {word_len} letters long.")
+
+# Guess system
+num_guesses = 4
+hint_index = 0  # Index to keep track of the last printed hint
+available_hints = ["synonyms", "definition", "path_similarity"]
+
+while num_guesses > 0:
+    guess = input("Guess the word: ").lower()
+
+    if guess == act_word:
+        print("Congratulations! You guessed the word correctly.")
+        break
+    else:
+        num_guesses -= 1
+        print(f"Sorry, that's not correct. You have {num_guesses} guesses left.")
+
+        # Generate hints
+        synonyms = wn.synsets(act_word)
+        synonyms_list = [lemma.name() for syn in synonyms for lemma in syn.lemmas() if act_word not in lemma.name()]
+        definition = wn.synset(f"{act_word}.n.01").definition() if synonyms else None
+
+        # If there are fewer than three synonyms, use all available synonyms
+        if len(synonyms_list) < 3:
+            selected_synonyms = synonyms_list
+            no_syn = len(synonyms_list) == 0
+            if no_syn:
+                print("There are no synonyms")
+        else:
+            selected_synonyms = synonyms_list[:3]
+
+        # Check if synsets are available for both guess and actual word
+        guess_synsets = wn.synsets(guess)
+        act_word_synsets = wn.synsets(act_word)
+        if guess_synsets and act_word_synsets:
+            path_similarity = wn.path_similarity(guess_synsets[0], act_word_synsets[0])
+
+        else:
+            path_similarity = None
+
+        hints = {"synonyms": selected_synonyms, "definition": definition, "path_similarity": path_similarity}
+
+        # Print hint
+        print("Here's a hint:")
+        print(hints[available_hints[hint_index]])
+
+
+        # Update hint_index to move to the next hint in the next iteration
+        hint_index = (hint_index + 1) % len(available_hints)
+
+else:
+    print("You've used all your guesses. Game over.")
+    print(f"The word was {act_word}")
+
+
